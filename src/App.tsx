@@ -24,9 +24,12 @@ function Row(props: {
     {route.handle &&
       Object.keys(route.handle).map((v: any, handleIndex: number) => {
         const handle = route.handle[v];
-        if (handle.handler === 'subroute' && handle.routes.length === 1) {
+        if (handle.handler === 'subroute') {
           return <Fragment key={`${path}/handle/${handleIndex}`}>
             {handle.routes.map((v: any, routeIndex: number) => {
+              if (route.match == null) {
+                route.match = [];
+              }
               if (v.match != null) {
                 v.match = [...route.match, ...v.match]
               } else {
