@@ -1,24 +1,317 @@
-import React from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import { GetConfig } from './helper';
+import { TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Box, Collapse, IconButton, Typography } from '@mui/material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+
+function capitalizeFirstLetter(val: string) {
+  return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
+
+function Row(props: {
+  path: any,
+  row: any,
+  route: any,
+  port: any,
+  server: any,
+}) {
+  const { path, row, route, port, server } = props;
+  const [open, setOpen] = React.useState<{ [key: string]: boolean }>({});
+
+  return <>
+    {route.handle &&
+      Object.keys(route.handle).map((v: any, handleIndex: number) => {
+        const handle = route.handle[v];
+        if (handle.handler === 'subroute' && handle.routes.length === 1) {
+          return <Fragment key={`${path}/handle/${handleIndex}`}>
+            {handle.routes.map((v: any, routeIndex: number) => {
+              if (v.match != null) {
+                v.match = [...route.match, ...v.match]
+              } else {
+                v.match = [...route.match]
+              }
+              return <Fragment key={`${path}/handle/${handleIndex}/routes/${routeIndex}`}>
+                <Row
+                  path={`${path}/handle/${handleIndex}/routes/${routeIndex}`}
+                  row={v}
+                  route={v}
+                  server={server}
+                  port={port}
+                />
+              </Fragment>
+            })}
+          </Fragment>
+        } else {
+          return <Fragment key={`${path}/handle/${handleIndex}`}>
+            <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+              <TableCell>
+                <IconButton
+                  aria-label="expand row"
+                  size="small"
+                  onClick={() => {
+                    setOpen({
+                      ...open,
+                      [`${handleIndex}`]: open[`${handleIndex}`] == true ? false : true,
+                    })
+                  }}
+                >
+                  {open[`${handleIndex}`] ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                </IconButton>
+              </TableCell>
+              <TableCell component="th" scope="row">
+                {route.match &&
+                  Object.keys(route.match).map((v: any) => {
+                    const match = route.match[v];
+                    return <Match key={v} match={match} />
+                  })}
+              </TableCell>
+              <TableCell align="right">{port}</TableCell>
+              <TableCell align="right">{server}</TableCell>
+              <TableCell align="right">
+                <div>
+                  {handle.handler}
+                </div>
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                <Collapse in={open[`${handleIndex}`]} timeout="auto" unmountOnExit>
+                  <Box sx={{ margin: 1 }}>
+                    <Route route={{
+                      ...row,
+                      handle: [handle]
+                    }} />
+                  </Box>
+                </Collapse>
+              </TableCell>
+            </TableRow>
+          </Fragment>
+        }
+      })}
+  </>
+}
+
+function Route(props: {
+  route: any
+}) {
+  const { route } = props;
+
+  return <fieldset style={{
+    padding: 10,
+    border: 'none',
+    borderRadius: 10,
+    backgroundColor: '#eee',
+  }}>
+    <legend style={{ textAlign: 'left', }}>Route:</legend>
+    <div>
+      {route.match && <>
+        Match:
+        <div style={{
+          padding: 10,
+        }}>
+          {Object.keys(route.match).map((v: any) => {
+            const match = route.match[v];
+            return <Match key={v} match={match} />
+          })}
+        </div>
+      </>}
+      Handle:
+      <div style={{
+        padding: 10,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      }}>
+        {route.handle &&
+          Object.keys(route.handle).map((v: any) => {
+            const handle = route.handle[v];
+            return <Handle key={v} handle={handle} />
+          })}
+      </div>
+    </div>
+  </fieldset>
+}
+
+function Match(props: {
+  match: any
+}) {
+  const { match } = props;
+  return <div>
+    {Object.keys(match).map(key => <div key={key}>
+      {capitalizeFirstLetter(key)}({JSON.stringify(match[key])})
+    </div>)}
+  </div>
+}
+
+function Handle(props: {
+  handle: any
+}) {
+  const { handle } = props;
+  return <div style={{
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: '#eef',
+  }}>
+    {Object.keys(handle).map(key => key !== "routes" && <div key={key}>
+      {capitalizeFirstLetter(key)}:
+      <div style={{
+        padding: 10,
+      }}>
+        {JSON.stringify(handle[key])}
+      </div>
+    </div>)}
+    {handle.routes && <>
+      <div>
+        Routes:
+      </div>
+      <div style={{
+        padding: 10,
+        display: 'flex',
+        gap: 10,
+      }}>
+        {handle.routes.map((v: any, index: number) => {
+          return <Route key={index} route={v} />
+        })}
+      </div>
+    </>}
+  </div>
+}
 
 function App() {
+  const [config, setConfig] = useState<any>({});
+
+  useEffect(() => {
+    async function init() {
+      try {
+        const _config = await GetConfig()
+        setConfig(_config);
+        console.log(_config);
+
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    init()
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div style={{
+      padding: 20,
+    }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+      }}>
+        <h1 style={{
+          color: 'white',
+          flex: 1,
+          maxWidth: 1400,
+          margin: 0,
+        }}>
+          HTTP Routes:
+        </h1>
+      </div>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center'
+      }}>
+        <TableContainer component={Paper} style={{
+          maxWidth: 1400,
+        }}>
+          <Table aria-label="collapsible table">
+            <TableHead>
+              <TableRow>
+                <TableCell />
+                <TableCell>Match</TableCell>
+                <TableCell align="right">Port</TableCell>
+                <TableCell align="right">Server</TableCell>
+                <TableCell align="right">Handle</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {config?.apps?.http?.servers &&
+                Object.keys(config?.apps?.http?.servers).map((serverName: any) => {
+                  const server = config?.apps?.http?.servers[serverName];
+                  return <Fragment key={serverName}>
+                    {server.routes &&
+                      Object.keys(server.routes).map((v: any) => {
+                        const route = server.routes[v];
+                        return <Row
+                          key={`/${serverName}/routes/${v}`}
+                          path={`/${serverName}/routes/${v}`}
+                          row={route}
+                          route={route}
+                          server={serverName}
+                          port={server.listen}
+                        />
+                      })}
+                  </Fragment>
+                })
+              }
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
+      {/* <div>
+        Http:
+        <div>
+          {config?.apps?.http?.servers &&
+            Object.keys(config?.apps?.http?.servers).map((v: any) => {
+              const server = config?.apps?.http?.servers[v];
+              return <div key={v}>
+                Server: {v}
+                <div>
+                  Port: {server.listen}
+                </div>
+                <div>
+                  <div style={{
+                    padding: 10,
+                  }}>
+                    {server.routes &&
+                      Object.keys(server.routes).map((v: any) => {
+                        const route = server.routes[v];
+                        return <div key={v}>
+                          Handle:
+                          <div style={{
+                            padding: 10,
+                          }}>
+                            {route.handle &&
+                              Object.keys(route.handle).map((v: any) => {
+                                const handle = route.handle[v];
+                                return <div key={v}>
+                                  <div>
+                                    Handler: {handle.handler}
+                                  </div>
+                                  Routes: {handle.handler}
+                                </div>
+                              })}
+                          </div>
+                          Match:
+                          <div style={{
+                            padding: 10,
+                          }}>
+                            {route.match &&
+                              Object.keys(route.match).map((v: any) => {
+                                const match = route.match[v];
+                                return <div key={v}>
+                                  Host: {match.host}
+                                </div>
+                              })}
+                          </div>
+                        </div>
+                      })}
+                  </div>
+                </div>
+              </div>
+            })}
+
+        </div>
+      </div>
+      <div>
+        Tls:
+      </div> */}
     </div>
   );
 }
