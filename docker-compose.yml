@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  webserver:
+    build: ./server
+    restart: unless-stopped
+    env_file: ./.env
+    ports:
+      - $PORT:3001
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./frontend/build:/frontend/build
+      - ./server:/server
+      - /server/node_modules
