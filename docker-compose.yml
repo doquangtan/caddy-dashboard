@@ -1,10 +1,30 @@
 version: "3.8"
-
 services:
-  webserver:
-    build: ./server
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile.buildcaddy
     restart: unless-stopped
     env_file: ./.env
+    ports:
+      - 80:80
+      - 443:443
+      - 443:443/udp
+      - 2019:2019
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./site:/srv
+
+  webserver:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ./.env
+    depends_on:
+      - caddy
     ports:
       - $PORT:3001
     stdin_open: true
@@ -13,3 +33,7 @@ services:
       - ./frontend/build:/frontend/build
       - ./server:/server
       - /server/node_modules
+
+volumes:
+  caddy_data:
+  caddy_config:

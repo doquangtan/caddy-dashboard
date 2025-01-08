@@ -9,7 +9,7 @@ app.use("/*", cors());
 app.use("/*", serveStatic({ root: "../frontend/build" }));
 
 app.get("/api", async (c) => {
-	const response = await fetch("http://192.168.31.174:2019/config", {
+	const response = await fetch("http://caddy:2019/config", {
 		method: "GET",
 		headers: { "Content-Type": "application/json" },
 	});

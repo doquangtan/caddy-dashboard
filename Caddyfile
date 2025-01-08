@@ -1,0 +1,26 @@
+{
+	admin :2019 {
+	}
+}
+
+:81 {
+	reverse_proxy localhost:3001
+}
+
+:443 {
+	tls internal {
+		on_demand
+	}
+	handle_errors {
+		rewrite * /{err.status_code}
+		reverse_proxy https://http.cat {
+			header_up Host {upstream_hostport}
+			replace_status {err.status_code}
+		}
+	}
+	file_server
+}
+
+:80 {
+	file_server
+}
