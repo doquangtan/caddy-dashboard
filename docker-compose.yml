@@ -11,6 +11,9 @@ services:
       - 443:443
       - 443:443/udp
       - 2019:2019
+      - 81:81
+    networks:
+      - caddy-bridge-network
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
@@ -21,15 +24,17 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
+    container_name: frontend
     restart: unless-stopped
     env_file: ./.env
+    networks:
+      - caddy-bridge-network
     depends_on:
       - caddy
-    ports:
-      - $PORT:3001
     stdin_open: true
     tty: true
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./frontend/build:/frontend/build
       - ./server:/server
       - /server/node_modules
@@ -37,3 +42,9 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+
+
+networks:
+  caddy-bridge-network:
+    driver: bridge
+    external: true
