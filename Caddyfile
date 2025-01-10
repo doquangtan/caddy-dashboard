@@ -2,8 +2,89 @@
 	admin :2019
 }
 
-:81 {
-	reverse_proxy 172.21.0.3:3001
+(cors) {
+	@cors_preflight method OPTIONS
+
+	header {
+		Access-Control-Allow-Origin "{header.origin}"
+		Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE"
+		Access-Control-Allow-Headers "*"
+		Access-Control-Allow-Credentials "true"
+		Access-Control-Max-Age "3600"
+	}
+
+	handle @cors_preflight {
+		respond "" 204
+	}
+}
+
+nas.muop.vn {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+	
+	reverse_proxy 192.168.31.174:3000
+}
+
+zalo.nas.muop.vn {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+
+	import cors {header.origin}
+
+	@websockets {
+		header Connection *Upgrade*
+		header Upgrade    websocket
+	}
+	reverse_proxy @websockets 192.168.31.174:3010
+
+	handle_path /api/* {
+		uri path_regexp /{2,} /
+		reverse_proxy 192.168.31.174:3010
+	}
+	
+	reverse_proxy 192.168.31.174:4000
+}
+
+vscode.nas.muop.vn {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+
+	reverse_proxy 192.168.31.174:8444
+}
+
+dms.nas.muop.vn {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+	
+	reverse_proxy 192.168.31.174:5000
+}
+
+caddy.nas.muop.vn {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+	
+	reverse_proxy 192.168.31.174:3001
+}
+
+traefik.nas.muop.vn {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+	
+	reverse_proxy 192.168.31.174:1337
+}
+
+portainer.nas.muop.vn {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+	
+	reverse_proxy 192.168.31.174:9000
 }
 
 :443 {

@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import { GetConfig } from './helper';
+import { GetConfig, GetHttpRoutes } from './helper';
 import { TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Box, Collapse, IconButton, Typography } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -11,101 +11,149 @@ function capitalizeFirstLetter(val: string) {
 }
 
 function Row(props: {
-  path: any,
-  row: any,
+  path?: any,
+  row?: any,
   route: any,
-  port: any,
-  server: any,
+  port?: any,
+  server?: any,
 }) {
   const { path, row, route, port, server } = props;
-  const [open, setOpen] = React.useState<{ [key: string]: boolean }>({});
+  const [open, setOpen] = React.useState<boolean>(false);
 
   return <>
-    {route.handle &&
-      Object.keys(route.handle).map((v: any, handleIndex: number) => {
-        const handle = route.handle[v];
-        if (handle.handler === 'subroute') {
-          return <Fragment key={`${path}/handle/${handleIndex}`}>
-            {handle.routes.map((v: any, routeIndex: number) => {
-              if (route.match == null) {
-                route.match = [];
-              }
-              if (v.match != null) {
-                v.match = [...route.match, ...v.match]
-              } else {
-                v.match = [...route.match]
-              }
-              return <Fragment key={`${path}/handle/${handleIndex}/routes/${routeIndex}`}>
-                <Row
-                  path={`${path}/handle/${handleIndex}/routes/${routeIndex}`}
-                  row={v}
-                  route={v}
-                  server={server}
-                  port={port}
-                />
-              </Fragment>
-            })}
-          </Fragment>
-        } else {
-          return <Fragment key={`${path}/handle/${handleIndex}`}>
-            <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
-              <TableCell>
-                <IconButton
-                  aria-label="expand row"
-                  size="small"
-                  onClick={() => {
-                    setOpen({
-                      ...open,
-                      [`${handleIndex}`]: open[`${handleIndex}`] == true ? false : true,
-                    })
-                  }}
-                >
-                  {open[`${handleIndex}`] ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                </IconButton>
-              </TableCell>
-              <TableCell component="th" scope="row">
-                {route.match &&
-                  Object.keys(route.match).map((v: any) => {
-                    const match = route.match[v];
-                    return <Match key={v} match={match} />
-                  })}
-              </TableCell>
-              <TableCell align="right">{port}</TableCell>
-              <TableCell align="right">{server}</TableCell>
-              <TableCell align="right">
-                <div>
-                  {handle.handler}
-                </div>
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-                <Collapse in={open[`${handleIndex}`]} timeout="auto" unmountOnExit>
-                  <Box sx={{ margin: 1 }}>
-                    <Route route={{
-                      ...row,
-                      handle: [handle]
-                    }} />
-                  </Box>
-                </Collapse>
-              </TableCell>
-            </TableRow>
-          </Fragment>
-        }
-      })}
+    <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+      <TableCell>
+        <IconButton
+          aria-label="expand row"
+          size="small"
+          onClick={() => {
+            // setOpen({
+            //   ...open,
+            //   [`${handleIndex}`]: open[`${handleIndex}`] == true ? false : true,
+            // })
+            setOpen(!open)
+          }}
+        >
+          {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+        </IconButton>
+      </TableCell>
+      <TableCell component="th" scope="row">
+        {route.match &&
+          Object.keys(route.match).map((v: any) => {
+            const match = route.match[v];
+            return <Match key={v} match={match} />
+          })}
+      </TableCell>
+      <TableCell align="right">{route.port}</TableCell>
+      <TableCell align="right">{route.name}</TableCell>
+      <TableCell align="right">
+        <div>
+          {route.handle.handler}
+        </div>
+      </TableCell>
+    </TableRow>
+    <TableRow>
+      <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+        <Collapse in={open} timeout="auto" unmountOnExit>
+          <Box sx={{ margin: 1 }}>
+            <Route route={{
+              ...route,
+              handle: [route.handle],
+            }} />
+          </Box>
+        </Collapse>
+      </TableCell>
+    </TableRow>
   </>
+
+  // return <>
+  //   {route.handle &&
+  //     Object.keys(route.handle).map((v: any, handleIndex: number) => {
+  //       const handle = route.handle[v];
+  //       if (handle.handler === 'subroute') {
+  //         return <Fragment key={`${path}/handle/${handleIndex}`}>
+  //           {handle.routes.map((v: any, routeIndex: number) => {
+  //             if (route.match == null) {
+  //               route.match = [];
+  //             }
+  //             if (v.match != null) {
+  //               v.match = [...route.match, ...v.match]
+  //             } else {
+  //               v.match = [...route.match]
+  //             }
+  //             return <Fragment key={`${path}/handle/${handleIndex}/routes/${routeIndex}`}>
+  //               <Row
+  //                 path={`${path}/handle/${handleIndex}/routes/${routeIndex}`}
+  //                 row={v}
+  //                 route={v}
+  //                 server={server}
+  //                 port={port}
+  //               />
+  //             </Fragment>
+  //           })}
+  //         </Fragment>
+  //       } else {
+  //         return <Fragment key={`${path}/handle/${handleIndex}`}>
+  //           <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+  //             <TableCell>
+  //               <IconButton
+  //                 aria-label="expand row"
+  //                 size="small"
+  //                 onClick={() => {
+  //                   setOpen({
+  //                     ...open,
+  //                     [`${handleIndex}`]: open[`${handleIndex}`] == true ? false : true,
+  //                   })
+  //                 }}
+  //               >
+  //                 {open[`${handleIndex}`] ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+  //               </IconButton>
+  //             </TableCell>
+  //             <TableCell component="th" scope="row">
+  //               {route.match &&
+  //                 Object.keys(route.match).map((v: any) => {
+  //                   const match = route.match[v];
+  //                   return <Match key={v} match={match} />
+  //                 })}
+  //             </TableCell>
+  //             <TableCell align="right">{port}</TableCell>
+  //             <TableCell align="right">{server}</TableCell>
+  //             <TableCell align="right">
+  //               <div>
+  //                 {handle.handler}
+  //               </div>
+  //             </TableCell>
+  //           </TableRow>
+  //           <TableRow>
+  //             <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+  //               <Collapse in={open[`${handleIndex}`]} timeout="auto" unmountOnExit>
+  //                 <Box sx={{ margin: 1 }}>
+  //                   <Route route={{
+  //                     ...row,
+  //                     handle: [handle]
+  //                   }} />
+  //                 </Box>
+  //               </Collapse>
+  //             </TableCell>
+  //           </TableRow>
+  //         </Fragment>
+  //       }
+  //     })}
+  // </>
 }
 
 function Route(props: {
-  route: any
+  route: any,
+  stye?: React.CSSProperties,
 }) {
-  const { route } = props;
+  const { route, stye } = props;
 
   return <fieldset style={{
     padding: 10,
     border: 'none',
     borderRadius: 10,
     backgroundColor: '#eee',
+    ...stye,
   }}>
     <legend style={{ textAlign: 'left', }}>Route:</legend>
     <div>
@@ -120,6 +168,25 @@ function Route(props: {
           })}
         </div>
       </>}
+      Middleware:
+      <div style={{
+        padding: 10,
+        display: 'flex',
+        gap: 10,
+      }}>
+        {route.middleware &&
+          route.middleware.map((middleware: any) => {
+            return <Route
+              route={{
+                ...middleware,
+                handle: [middleware.handle],
+              }}
+              stye={{
+                backgroundColor: '#e5f10029',
+              }}
+            />
+          })}
+      </div>
       Handle:
       <div style={{
         padding: 10,
@@ -162,7 +229,9 @@ function Handle(props: {
       <div style={{
         padding: 10,
       }}>
-        {JSON.stringify(handle[key])}
+        <pre>
+          {JSON.stringify(handle[key], null, 2)}
+        </pre>
       </div>
     </div>)}
     {handle.routes && <>
@@ -184,6 +253,7 @@ function Handle(props: {
 
 function App() {
   const [config, setConfig] = useState<any>({});
+  const [httpRouter, setHttpRouters] = useState<any>([]);
 
   useEffect(() => {
     async function init() {
@@ -191,6 +261,9 @@ function App() {
         const _config = await GetConfig()
         setConfig(_config);
         console.log(_config);
+
+        const _httpRouter = await GetHttpRoutes()
+        setHttpRouters(_httpRouter);
 
       } catch (error) {
         console.log(error)
@@ -234,7 +307,16 @@ function App() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {config?.apps?.http?.servers &&
+              {httpRouter.map((v: any, i: number) => {
+                return <Row
+                  key={i}
+                  // path={``}
+                  // row={}
+                  route={v}
+                // port={server.listen}
+                />
+              })}
+              {/* {config?.apps?.http?.servers &&
                 Object.keys(config?.apps?.http?.servers).map((serverName: any) => {
                   const server = config?.apps?.http?.servers[serverName];
                   return <Fragment key={serverName}>
@@ -252,7 +334,7 @@ function App() {
                       })}
                   </Fragment>
                 })
-              }
+              } */}
             </TableBody>
           </Table>
         </TableContainer>
