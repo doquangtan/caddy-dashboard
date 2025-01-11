@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const URL_API = "http://localhost:81";
+const URL_API = window.location.origin;
 
 async function GetConfig() {
     const result = await axios({

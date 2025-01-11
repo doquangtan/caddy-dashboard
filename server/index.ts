@@ -189,7 +189,7 @@ async function init() {
 		let frontendContainer: any = null;
 		Object.keys(body?.Containers).map(v => {
 			const container = body?.Containers[v];
-			if (container.Name === "frontend") {
+			if (container.Name === "caddy-proxy-manager-frontend") {
 				frontendContainer = container;
 			}
 		});

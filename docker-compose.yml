@@ -24,7 +24,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: frontend
+    container_name: caddy-proxy-manager-frontend
     restart: unless-stopped
     env_file: ./.env
     networks:
